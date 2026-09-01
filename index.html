@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PokéApp: busca y explora Pokémon usando la PokéAPI." />
+  <title>PokéApp — PokéAPI</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header__inner">
+      <h1 class="header__title">PokéApp</h1>
+      <p class="header__subtitle">
+        Busca y explora Pokémon usando los datos oficiales de PokéAPI.
+      </p>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="search" aria-labelledby="search-title">
+      <h2 id="search-title" class="visually-hidden">Buscar Pokémon</h2>
+
+      <form id="search-form" class="search__form" novalidate>
+        <div class="search__field">
+          <label class="search__label" for="search-input">Nombre del Pokémon</label>
+          <input
+            id="search-input"
+            class="search__input"
+            type="search"
+            placeholder="Ej. pikachu"
+            autocomplete="off"
+          />
+        </div>
+        <button type="submit" class="btn btn--primary">Buscar</button>
+        <button type="button" id="show-all-button" class="btn btn--secondary">Mostrar todos</button>
+      </form>
+    </section>
+
+    <section class="results" aria-labelledby="results-title">
+      <div class="results__header">
+        <h2 id="results-title" class="results__title">Resultados</h2>
+        <p id="results-counter" class="results__counter" aria-live="polite"></p>
+      </div>
+
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+
+      <div id="loading" class="loading" hidden>
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Cargando...</p>
+      </div>
+
+      <div id="results-container" class="results__grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>
+      Datos obtenidos de
+      <a href="https://pokeapi.co" target="_blank" rel="noopener noreferrer">PokéAPI</a>.
+      Proyecto construido con HTML, CSS y JavaScript.
+    </p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
