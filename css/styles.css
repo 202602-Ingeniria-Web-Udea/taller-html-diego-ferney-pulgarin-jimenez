@@ -310,6 +310,12 @@ a {
   border-radius: 999px;
 }
 
+.badge--legendary {
+  background: linear-gradient(135deg, #f59e0b, #b45309);
+  margin-top: 0.5rem;
+  display: inline-block;
+}
+
 /* Animación de aparición */
 
 @keyframes appear {

@@ -26,6 +26,7 @@ nombre y los tipos del Pokémon, todo renderizado dinámicamente desde JavaScrip
 * Diseño responsive (escritorio, tablet y móvil).
 * Tipos mostrados como insignias con colores según el tipo.
 * Generación de cada Pokémon mostrada en la tarjeta (ej. "Gen I").
+* Insignia "Legendario" en los Pokémon legendarios.
 * Contador de Pokémon mostrados.
 * Botón "Mostrar todos" para volver a la lista inicial.
 * Animación de aparición de las tarjetas.

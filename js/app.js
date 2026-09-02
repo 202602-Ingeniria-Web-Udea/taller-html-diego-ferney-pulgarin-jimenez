@@ -85,6 +85,7 @@ function mapPokemonData(data, species) {
     image: getPokemonImage(data),
     types: data.types.map((typeEntry) => typeEntry.type.name),
     generation: getGenerationName(species),
+    isLegendary: Boolean(species?.is_legendary),
   };
 }
 
@@ -154,6 +155,14 @@ function createPokemonCard(pokemon) {
   });
 
   body.append(name, generation, typesContainer);
+
+  if (pokemon.isLegendary) {
+    const legendaryBadge = document.createElement("span");
+    legendaryBadge.classList.add("badge", "badge--legendary");
+    legendaryBadge.textContent = "Legendario";
+    body.appendChild(legendaryBadge);
+  }
+
   card.append(image, body);
   return card;
 }
