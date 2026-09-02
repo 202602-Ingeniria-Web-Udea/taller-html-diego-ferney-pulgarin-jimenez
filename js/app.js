@@ -1,7 +1,7 @@
 // PokéApp — Lógica de la aplicación. Consume la PokéAPI usando fetch() y renderiza las tarjetas dinámicamente.
 
 const API_BASE_URL = "https://pokeapi.co/api/v2";
-const INITIAL_POKEMON_COUNT = 150;
+const INITIAL_POKEMON_COUNT = 10;
 
 const searchForm = document.getElementById("search-form");
 const searchInput = document.getElementById("search-input");
@@ -56,6 +56,12 @@ async function fetchPokemonDetails(url) {
   return handleApiResponse(response);
 }
 
+// Obtiene los datos de la especie (generación, legendario, cadena evolutiva).
+async function fetchPokemonSpecies(url) {
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
 // Convierte una respuesta de fetch en datos o lanza un error descriptivo.
 async function handleApiResponse(response) {
   if (!response.ok) {
@@ -72,13 +78,26 @@ async function handleApiResponse(response) {
 
 // Extracción de datos
 
-// Normaliza los datos de la API a un objeto simple y predecible.
-function mapPokemonData(data) {
+// Normaliza los datos de la API (Pokémon + especie) a un objeto simple.
+function mapPokemonData(data, species) {
   return {
     name: data.name,
     image: getPokemonImage(data),
     types: data.types.map((typeEntry) => typeEntry.type.name),
+    generation: getGenerationName(species),
   };
+}
+
+// Consulta la especie y arma el objeto final de un Pokémon.
+async function fetchAndMapPokemon(data) {
+  const species = await fetchPokemonSpecies(data.species.url);
+  return mapPokemonData(data, species);
+}
+
+// Convierte "generation-i" en "I", "generation-ii" en "II", etc.
+function getGenerationName(species) {
+  const name = species?.generation?.name || "";
+  return name.replace("generation-", "").toUpperCase();
 }
 
 // Prioriza el arte oficial; si no existe, usa el sprite frontal clásico.
@@ -119,6 +138,10 @@ function createPokemonCard(pokemon) {
   name.classList.add("card__name");
   name.textContent = pokemon.name;
 
+  const generation = document.createElement("p");
+  generation.classList.add("card__generation");
+  generation.textContent = `Gen ${pokemon.generation}`;
+
   const typesContainer = document.createElement("div");
   typesContainer.classList.add("card__types");
 
@@ -130,7 +153,7 @@ function createPokemonCard(pokemon) {
     typesContainer.appendChild(badge);
   });
 
-  body.append(name, typesContainer);
+  body.append(name, generation, typesContainer);
   card.append(image, body);
   return card;
 }
@@ -187,7 +210,7 @@ async function loadInitialPokemon() {
     const details = await Promise.all(
       list.results.map((item) => fetchPokemonDetails(item.url))
     );
-    const pokemonList = details.map(mapPokemonData);
+    const pokemonList = await Promise.all(details.map(fetchAndMapPokemon));
     renderPokemonList(pokemonList);
   } catch (error) {
     console.error("Error al cargar la lista inicial:", error);
@@ -221,7 +244,7 @@ async function handleSearch(event) {
   isRequestInProgress = true;
   try {
     const data = await fetchPokemonByName(query);
-    const pokemon = mapPokemonData(data);
+    const pokemon = await fetchAndMapPokemon(data);
     renderPokemonList([pokemon]);
   } catch (error) {
     console.error("Error al buscar el Pokémon:", error);

@@ -286,6 +286,12 @@ a {
 .card__name {
   font-size: 1.15rem;
   text-transform: capitalize;
+  margin-bottom: 0.25rem;
+}
+
+.card__generation {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
   margin-bottom: 0.5rem;
 }
 

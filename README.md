@@ -25,6 +25,7 @@ nombre y los tipos del Pokémon, todo renderizado dinámicamente desde JavaScrip
 * Estado de carga con indicador visual mientras se consulta la API.
 * Diseño responsive (escritorio, tablet y móvil).
 * Tipos mostrados como insignias con colores según el tipo.
+* Generación de cada Pokémon mostrada en la tarjeta (ej. "Gen I").
 * Contador de Pokémon mostrados.
 * Botón "Mostrar todos" para volver a la lista inicial.
 * Animación de aparición de las tarjetas.
@@ -40,6 +41,7 @@ Endpoints usados:
 * `GET https://pokeapi.co/api/v2/pokemon?limit=10` → lista inicial.
 * `GET https://pokeapi.co/api/v2/pokemon/{id}` → detalles (imagen y tipos).
 * `GET https://pokeapi.co/api/v2/pokemon/{name}` → búsqueda por nombre.
+* `GET https://pokeapi.co/api/v2/pokemon-species/{id}` → especie (generación, etc.).
 
 ## Ejecución
 
