@@ -40,7 +40,13 @@
     <section class="results" aria-labelledby="results-title">
       <div class="results__header">
         <h2 id="results-title" class="results__title">Resultados</h2>
-        <p id="results-counter" class="results__counter" aria-live="polite"></p>
+        <div class="results__meta">
+          <label class="evolution-toggle" for="show-evolutions-toggle">
+            <input type="checkbox" id="show-evolutions-toggle" />
+            Mostrar evoluciones
+          </label>
+          <p id="results-counter" class="results__counter" aria-live="polite"></p>
+        </div>
       </div>
 
       <p id="message" class="message" role="status" aria-live="polite"></p>

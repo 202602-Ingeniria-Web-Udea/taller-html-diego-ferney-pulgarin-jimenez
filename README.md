@@ -27,6 +27,9 @@ nombre y los tipos del Pokémon, todo renderizado dinámicamente desde JavaScrip
 * Tipos mostrados como insignias con colores según el tipo.
 * Generación de cada Pokémon mostrada en la tarjeta (ej. "Gen I").
 * Insignia "Legendario" en los Pokémon legendarios.
+* Carga inicial con Pokémon aleatorios.
+* Toggle "Mostrar evoluciones" que muestra la línea evolutiva como mini
+  tarjetas una al lado de la otra, con flechas indicando la dirección.
 * Contador de Pokémon mostrados.
 * Botón "Mostrar todos" para volver a la lista inicial.
 * Animación de aparición de las tarjetas.
@@ -43,6 +46,7 @@ Endpoints usados:
 * `GET https://pokeapi.co/api/v2/pokemon/{id}` → detalles (imagen y tipos).
 * `GET https://pokeapi.co/api/v2/pokemon/{name}` → búsqueda por nombre.
 * `GET https://pokeapi.co/api/v2/pokemon-species/{id}` → especie (generación, etc.).
+* `GET https://pokeapi.co/api/v2/evolution-chain/{id}` → línea evolutiva.
 
 ## Ejecución
 

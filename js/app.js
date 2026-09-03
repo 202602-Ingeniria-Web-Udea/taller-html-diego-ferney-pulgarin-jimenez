@@ -6,6 +6,7 @@ const INITIAL_POKEMON_COUNT = 10;
 const searchForm = document.getElementById("search-form");
 const searchInput = document.getElementById("search-input");
 const showAllButton = document.getElementById("show-all-button");
+const evolutionToggle = document.getElementById("show-evolutions-toggle");
 const resultsContainer = document.getElementById("results-container");
 const resultsCounter = document.getElementById("results-counter");
 const messageElement = document.getElementById("message");
@@ -13,6 +14,12 @@ const loadingElement = document.getElementById("loading");
 
 // Bloquea búsquedas simultáneas para evitar estados inconsistentes.
 let isRequestInProgress = false;
+
+// Indica si el usuario quiere ver la línea evolutiva en cada tarjeta.
+let showEvolutions = false;
+
+// Lista actualmente mostrada; permite re-renderizar sin volver a consultar la API.
+let currentPokemonList = [];
 
 // Mapa de colores por tipo para las insignias.
 const typeColors = {
@@ -44,20 +51,26 @@ async function fetchPokemonByName(name) {
   return handleApiResponse(response);
 }
 
-// Obtiene la lista inicial de Pokémon.
+// Obtiene un Pokémon específico por id desde la PokéAPI.
+async function fetchPokemonById(id) {
+  const response = await fetch(`${API_BASE_URL}/pokemon/${id}`);
+  return handleApiResponse(response);
+}
+
+// Obtiene la lista de Pokémon (se usa para conocer el total disponible).
 async function fetchPokemonList(limit) {
   const response = await fetch(`${API_BASE_URL}/pokemon?limit=${limit}`);
   return handleApiResponse(response);
 }
 
-// Obtiene los detalles (imagen y tipos).
-async function fetchPokemonDetails(url) {
+// Obtiene los datos de la especie (generación, legendario, cadena evolutiva).
+async function fetchPokemonSpecies(url) {
   const response = await fetch(url);
   return handleApiResponse(response);
 }
 
-// Obtiene los datos de la especie (generación, legendario, cadena evolutiva).
-async function fetchPokemonSpecies(url) {
+// Obtiene la cadena evolutiva completa de una URL.
+async function fetchEvolutionChain(url) {
   const response = await fetch(url);
   return handleApiResponse(response);
 }
@@ -86,6 +99,7 @@ function mapPokemonData(data, species) {
     types: data.types.map((typeEntry) => typeEntry.type.name),
     generation: getGenerationName(species),
     isLegendary: Boolean(species?.is_legendary),
+    evolutionChainUrl: species?.evolution_chain?.url || null,
   };
 }
 
@@ -110,19 +124,85 @@ function getPokemonImage(data) {
   );
 }
 
+// Recorre la cadena evolutiva y acumula los nombres en orden.
+function collectEvolutionNames(node, names) {
+  names.push(node.species.name);
+  node.evolves_to.forEach((child) => collectEvolutionNames(child, names));
+}
+
+// Obtiene la línea evolutiva completa (nombre + imagen) de un Pokémon.
+async function fetchEvolutionLine(url) {
+  const data = await fetchEvolutionChain(url);
+  const names = [];
+  collectEvolutionNames(data.chain, names);
+
+  // Cada especie se consulta para recuperar su imagen.
+  return Promise.all(
+    names.map(async (name) => {
+      try {
+        const pokemon = await fetchPokemonByName(name);
+        return { name: pokemon.name, image: getPokemonImage(pokemon) };
+      } catch (error) {
+        // Si una especie no tiene un Pokémon homónimo, se muestra solo el nombre.
+        return { name, image: "" };
+      }
+    })
+  );
+}
+
+// Obtiene las evoluciones de una lista (Map nombre -> línea evolutiva).
+async function fetchEvolutions(pokemonList) {
+  const entries = await Promise.all(
+    pokemonList.map(async (pokemon) => {
+      const line = pokemon.evolutionChainUrl
+        ? await fetchEvolutionLine(pokemon.evolutionChainUrl)
+        : null;
+      return [pokemon.name, line];
+    })
+  );
+  return new Map(entries);
+}
+
+// Devuelve la cantidad total de especies (ids 1..1025, sin huecos).
+// Se usa el endpoint de especies porque /pokemon incluye formas con ids no
+// consecutivos, lo que haría fallar los ids aleatorios con errores 404.
+async function getTotalPokemonCount() {
+  const response = await fetch(`${API_BASE_URL}/pokemon-species?limit=1`);
+  const data = await handleApiResponse(response);
+  return data.count;
+}
+
+// Genera ids aleatorios únicos dentro del rango disponible.
+function getRandomUniqueIds(count, max) {
+  const total = Math.min(count, max);
+  const ids = new Set();
+  while (ids.size < total) {
+    ids.add(Math.floor(Math.random() * max) + 1);
+  }
+  return [...ids];
+}
+
 // Renderizado del DOM
 
-// Muestra la lista completa de Pokémon en el grid.
-function renderPokemonList(pokemonList) {
+// Muestra la lista de Pokémon en el grid, opcionalmente con sus evoluciones.
+function renderPokemonList(pokemonList, evolutions) {
+  currentPokemonList = pokemonList;
   clearResults();
   pokemonList.forEach((pokemon) => {
-    resultsContainer.appendChild(createPokemonCard(pokemon));
+    const evolutionLine = evolutions ? evolutions.get(pokemon.name) : null;
+    resultsContainer.appendChild(createPokemonCard(pokemon, evolutionLine));
   });
   updateCounter(pokemonList.length);
 }
 
+// Consulta las evoluciones (si están activadas) y renderiza la lista.
+async function fetchAndRender(pokemonList) {
+  const evolutions = showEvolutions ? await fetchEvolutions(pokemonList) : null;
+  renderPokemonList(pokemonList, evolutions);
+}
+
 // Crea una tarjeta individual (article) a partir de los datos del Pokémon.
-function createPokemonCard(pokemon) {
+function createPokemonCard(pokemon, evolutionLine) {
   const card = document.createElement("article");
   card.classList.add("card");
 
@@ -163,8 +243,53 @@ function createPokemonCard(pokemon) {
     body.appendChild(legendaryBadge);
   }
 
+  if (evolutionLine && evolutionLine.length > 1) {
+    body.appendChild(createEvolutionRow(evolutionLine));
+  }
+
   card.append(image, body);
   return card;
+}
+
+// Crea la fila de etapas evolutivas (mini tarjetas separadas por flechas).
+function createEvolutionRow(evolutionLine) {
+  const container = document.createElement("div");
+  container.classList.add("card__evolution-row");
+
+  evolutionLine.forEach((stage, index) => {
+    if (index > 0) {
+      const arrow = document.createElement("span");
+      arrow.classList.add("card__evolution-arrow");
+      arrow.setAttribute("aria-hidden", "true");
+      arrow.textContent = "→";
+      container.appendChild(arrow);
+    }
+    container.appendChild(createEvolutionStage(stage));
+  });
+
+  return container;
+}
+
+// Crea una mini tarjeta con la imagen y el nombre de una etapa evolutiva.
+function createEvolutionStage(stage) {
+  const stageElement = document.createElement("div");
+  stageElement.classList.add("card__evolution-stage");
+
+  if (stage.image) {
+    const image = document.createElement("img");
+    image.classList.add("card__evolution-image");
+    image.src = stage.image;
+    image.alt = `Imagen de ${stage.name}`;
+    image.loading = "lazy";
+    stageElement.appendChild(image);
+  }
+
+  const name = document.createElement("span");
+  name.classList.add("card__evolution-name");
+  name.textContent = stage.name;
+  stageElement.appendChild(name);
+
+  return stageElement;
 }
 
 // Actualiza el contador de Pokémon mostrados.
@@ -204,23 +329,23 @@ function clearResults() {
 function setControlsDisabled(disabled) {
   searchInput.disabled = disabled;
   showAllButton.disabled = disabled;
+  evolutionToggle.disabled = disabled;
   searchForm.querySelector('button[type="submit"]').disabled = disabled;
 }
 
 // Flujos principales
 
-// Carga inicial: pide la lista y luego los detalles de cada Pokémon.
+// Carga inicial: elige Pokémon aleatorios y renderiza sus tarjetas.
 async function loadInitialPokemon() {
   showLoading();
   setControlsDisabled(true);
   isRequestInProgress = true;
   try {
-    const list = await fetchPokemonList(INITIAL_POKEMON_COUNT);
-    const details = await Promise.all(
-      list.results.map((item) => fetchPokemonDetails(item.url))
-    );
+    const total = await getTotalPokemonCount();
+    const ids = getRandomUniqueIds(INITIAL_POKEMON_COUNT, total);
+    const details = await Promise.all(ids.map((id) => fetchPokemonById(id)));
     const pokemonList = await Promise.all(details.map(fetchAndMapPokemon));
-    renderPokemonList(pokemonList);
+    await fetchAndRender(pokemonList);
   } catch (error) {
     console.error("Error al cargar la lista inicial:", error);
     showError("No fue posible conectarse con la PokéAPI. Intenta nuevamente.");
@@ -254,7 +379,7 @@ async function handleSearch(event) {
   try {
     const data = await fetchPokemonByName(query);
     const pokemon = await fetchAndMapPokemon(data);
-    renderPokemonList([pokemon]);
+    await fetchAndRender([pokemon]);
   } catch (error) {
     console.error("Error al buscar el Pokémon:", error);
     if (error.isNotFound) {
@@ -286,6 +411,36 @@ function handleShowAll() {
   loadInitialPokemon();
 }
 
+// Activa o desactiva la visualización de evoluciones en las tarjetas.
+async function handleEvolutionToggle() {
+  showEvolutions = evolutionToggle.checked;
+
+  if (!currentPokemonList.length) {
+    return;
+  }
+
+  // Al desactivar no hay que consultar la API: se re-renderiza sin evoluciones.
+  if (!showEvolutions) {
+    renderPokemonList(currentPokemonList, null);
+    return;
+  }
+
+  showLoading();
+  setControlsDisabled(true);
+  isRequestInProgress = true;
+  try {
+    await fetchAndRender(currentPokemonList);
+  } catch (error) {
+    console.error("Error al cargar las evoluciones:", error);
+    showError("No fue posible cargar las evoluciones. Intenta nuevamente.");
+    renderPokemonList(currentPokemonList, null);
+  } finally {
+    hideLoading();
+    setControlsDisabled(false);
+    isRequestInProgress = false;
+  }
+}
+
 // Convierte la primera letra en mayúscula (para nombres de tipos).
 function capitalize(text) {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -295,5 +450,6 @@ function capitalize(text) {
 
 searchForm.addEventListener("submit", handleSearch);
 showAllButton.addEventListener("click", handleShowAll);
+evolutionToggle.addEventListener("change", handleEvolutionToggle);
 
 loadInitialPokemon();

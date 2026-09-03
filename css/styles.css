@@ -190,6 +190,27 @@ a {
   font-size: 1.5rem;
 }
 
+.results__meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.evolution-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.evolution-toggle input {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
 .results__counter {
   color: var(--color-text-muted);
   font-size: 0.95rem;
@@ -293,6 +314,42 @@ a {
   font-size: 0.85rem;
   color: var(--color-text-muted);
   margin-bottom: 0.5rem;
+}
+
+.card__evolution-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.card__evolution-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.card__evolution-image {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.card__evolution-name {
+  font-size: 0.7rem;
+  text-transform: capitalize;
+  color: var(--color-text-muted);
+}
+
+.card__evolution-arrow {
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .card__types {
