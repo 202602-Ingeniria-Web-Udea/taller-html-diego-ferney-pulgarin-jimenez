@@ -17,7 +17,7 @@ nombre y los tipos del Pokémon, todo renderizado dinámicamente desde JavaScrip
 
 ## Funcionalidades
 
-* Carga inicial de al menos 10 Pokémon con imagen, nombre y tipos.
+* Carga inicial de al menos 12 Pokémon con imagen, nombre y tipos.
 * Búsqueda de Pokémon por nombre (ignora espacios y mayúsculas/minúsculas).
 * Búsqueda ejecutable con el botón "Buscar" o presionando `Enter`.
 * Mensajes de error amigables para búsquedas vacías, Pokémon inexistentes y
@@ -28,10 +28,10 @@ nombre y los tipos del Pokémon, todo renderizado dinámicamente desde JavaScrip
 * Generación de cada Pokémon mostrada en la tarjeta (ej. "Gen I").
 * Insignia "Legendario" en los Pokémon legendarios.
 * Carga inicial con Pokémon aleatorios.
+* Elegir la cantidad de Pokémon a mostrar al inicio (1–150).
 * Toggle "Mostrar evoluciones" que muestra la línea evolutiva como mini
   tarjetas una al lado de la otra, con flechas indicando la dirección.
 * Contador de Pokémon mostrados.
-* Botón "Mostrar todos" para volver a la lista inicial.
 * Animación de aparición de las tarjetas.
 
 ## API utilizada
@@ -94,7 +94,6 @@ y luego abrir `http://localhost:8000`.
 * **Insignias de tipo con colores**: cada tipo se muestra con un color
   representativo (fuego, agua, eléctrico, planta, etc.).
 * **Contador de resultados**: indica cuántos Pokémon se están mostrando.
-* **Botón "Mostrar todos"**: restaura la lista inicial de Pokémon.
 * **Animación de aparición**: las tarjetas aparecen con una transición suave.
 * **Bloqueo de búsquedas simultáneas**: evita ejecutar varias peticiones a la
   vez para mantener la interfaz consistente.

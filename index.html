@@ -33,7 +33,19 @@
           />
         </div>
         <button type="submit" class="btn btn--primary">Buscar</button>
-        <button type="button" id="show-all-button" class="btn btn--secondary">Mostrar todos</button>
+
+        <div class="search__field search__field--count">
+          <label class="search__label" for="pokemon-count">Elegir cantidad de Pokémon a mostrar</label>
+          <input
+            id="pokemon-count"
+            class="search__input"
+            type="number"
+            min="1"
+            max="150"
+            value="12"
+          />
+        </div>
+        <button type="button" id="load-button" class="btn btn--secondary">Mostrar</button>
       </form>
     </section>
 

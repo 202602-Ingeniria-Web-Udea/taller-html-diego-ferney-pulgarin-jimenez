@@ -1,11 +1,13 @@
 // PokéApp — Lógica de la aplicación. Consume la PokéAPI usando fetch() y renderiza las tarjetas dinámicamente.
 
 const API_BASE_URL = "https://pokeapi.co/api/v2";
-const INITIAL_POKEMON_COUNT = 10;
+const DEFAULT_POKEMON_COUNT = 12;
+const MAX_POKEMON_COUNT = 150;
 
 const searchForm = document.getElementById("search-form");
 const searchInput = document.getElementById("search-input");
-const showAllButton = document.getElementById("show-all-button");
+const countInput = document.getElementById("pokemon-count");
+const loadButton = document.getElementById("load-button");
 const evolutionToggle = document.getElementById("show-evolutions-toggle");
 const resultsContainer = document.getElementById("results-container");
 const resultsCounter = document.getElementById("results-counter");
@@ -182,6 +184,15 @@ function getRandomUniqueIds(count, max) {
   return [...ids];
 }
 
+// Lee y valida la cantidad de Pokémon elegida por el usuario.
+function getInitialCount() {
+  const value = parseInt(countInput.value, 10);
+  if (Number.isNaN(value)) {
+    return DEFAULT_POKEMON_COUNT;
+  }
+  return Math.min(Math.max(value, 1), MAX_POKEMON_COUNT);
+}
+
 // Renderizado del DOM
 
 // Muestra la lista de Pokémon en el grid, opcionalmente con sus evoluciones.
@@ -328,7 +339,8 @@ function clearResults() {
 // Habilita o deshabilita los controles durante una petición.
 function setControlsDisabled(disabled) {
   searchInput.disabled = disabled;
-  showAllButton.disabled = disabled;
+  countInput.disabled = disabled;
+  loadButton.disabled = disabled;
   evolutionToggle.disabled = disabled;
   searchForm.querySelector('button[type="submit"]').disabled = disabled;
 }
@@ -337,12 +349,19 @@ function setControlsDisabled(disabled) {
 
 // Carga inicial: elige Pokémon aleatorios y renderiza sus tarjetas.
 async function loadInitialPokemon() {
+  if (isRequestInProgress) {
+    return;
+  }
+
+  // Limpia el campo de búsqueda para que actúe como reinicio de la lista.
+  searchInput.value = "";
+
   showLoading();
   setControlsDisabled(true);
   isRequestInProgress = true;
   try {
     const total = await getTotalPokemonCount();
-    const ids = getRandomUniqueIds(INITIAL_POKEMON_COUNT, total);
+    const ids = getRandomUniqueIds(getInitialCount(), total);
     const details = await Promise.all(ids.map((id) => fetchPokemonById(id)));
     const pokemonList = await Promise.all(details.map(fetchAndMapPokemon));
     await fetchAndRender(pokemonList);
@@ -401,16 +420,6 @@ function normalizeQuery(value) {
   return value.trim().toLowerCase();
 }
 
-// Vuelve a mostrar la lista inicial de Pokémon.
-function handleShowAll() {
-  if (isRequestInProgress) {
-    return;
-  }
-  searchInput.value = "";
-  hideMessage();
-  loadInitialPokemon();
-}
-
 // Activa o desactiva la visualización de evoluciones en las tarjetas.
 async function handleEvolutionToggle() {
   showEvolutions = evolutionToggle.checked;
@@ -449,7 +458,7 @@ function capitalize(text) {
 // Inicialización
 
 searchForm.addEventListener("submit", handleSearch);
-showAllButton.addEventListener("click", handleShowAll);
+loadButton.addEventListener("click", loadInitialPokemon);
 evolutionToggle.addEventListener("change", handleEvolutionToggle);
 
 loadInitialPokemon();

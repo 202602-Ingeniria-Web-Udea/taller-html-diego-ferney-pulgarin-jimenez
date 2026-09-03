@@ -108,6 +108,10 @@ a {
   flex: 1 1 220px;
 }
 
+.search__field--count {
+  flex: 0 1 140px;
+}
+
 .search__label {
   font-weight: 600;
   font-size: 0.9rem;
