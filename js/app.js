@@ -9,6 +9,7 @@ const searchInput = document.getElementById("search-input");
 const countInput = document.getElementById("pokemon-count");
 const loadButton = document.getElementById("load-button");
 const evolutionToggle = document.getElementById("show-evolutions-toggle");
+const typeFilter = document.getElementById("type-filter");
 const resultsContainer = document.getElementById("results-container");
 const resultsCounter = document.getElementById("results-counter");
 const messageElement = document.getElementById("message");
@@ -22,6 +23,9 @@ let showEvolutions = false;
 
 // Lista actualmente mostrada; permite re-renderizar sin volver a consultar la API.
 let currentPokemonList = [];
+
+// Evoluciones ya cargadas de la lista actual (Map nombre -> línea evolutiva).
+let currentEvolutions = null;
 
 // Mapa de colores por tipo para las insignias.
 const typeColors = {
@@ -195,21 +199,39 @@ function getInitialCount() {
 
 // Renderizado del DOM
 
-// Muestra la lista de Pokémon en el grid, opcionalmente con sus evoluciones.
-function renderPokemonList(pokemonList, evolutions) {
-  currentPokemonList = pokemonList;
-  clearResults();
-  pokemonList.forEach((pokemon) => {
-    const evolutionLine = evolutions ? evolutions.get(pokemon.name) : null;
-    resultsContainer.appendChild(createPokemonCard(pokemon, evolutionLine));
-  });
-  updateCounter(pokemonList.length);
+// Aplica el filtro de tipo sobre la lista cargada.
+function applyTypeFilter(pokemonList) {
+  const selectedType = typeFilter.value;
+  if (!selectedType) {
+    return pokemonList;
+  }
+  return pokemonList.filter((pokemon) => pokemon.types.includes(selectedType));
 }
 
-// Consulta las evoluciones (si están activadas) y renderiza la lista.
+// Renderiza la lista cargada aplicando el filtro de tipo actual.
+function renderCurrentList() {
+  const filteredList = applyTypeFilter(currentPokemonList);
+
+  clearResults();
+  filteredList.forEach((pokemon) => {
+    const evolutionLine = currentEvolutions ? currentEvolutions.get(pokemon.name) : null;
+    resultsContainer.appendChild(createPokemonCard(pokemon, evolutionLine));
+  });
+  updateCounter(filteredList.length);
+
+  // Sin resultados por el filtro, se muestra un mensaje contextual.
+  if (filteredList.length === 0) {
+    showInfo("No hay Pokémon de este tipo en la lista actual.");
+  } else {
+    hideMessage();
+  }
+}
+
+// Consulta las evoluciones (si están activadas) y actualiza el estado.
 async function fetchAndRender(pokemonList) {
-  const evolutions = showEvolutions ? await fetchEvolutions(pokemonList) : null;
-  renderPokemonList(pokemonList, evolutions);
+  currentPokemonList = pokemonList;
+  currentEvolutions = showEvolutions ? await fetchEvolutions(pokemonList) : null;
+  renderCurrentList();
 }
 
 // Crea una tarjeta individual (article) a partir de los datos del Pokémon.
@@ -323,13 +345,22 @@ function hideLoading() {
 
 // Muestra un mensaje informativo o de error según corresponda.
 function showError(text) {
+  showMessage(text, "error");
+}
+
+function showInfo(text) {
+  showMessage(text, "info");
+}
+
+function showMessage(text, type) {
   messageElement.textContent = text;
-  messageElement.classList.add("message--error", "message--visible");
+  messageElement.classList.remove("message--error", "message--info");
+  messageElement.classList.add(`message--${type}`, "message--visible");
 }
 
 function hideMessage() {
   messageElement.textContent = "";
-  messageElement.classList.remove("message--error", "message--visible");
+  messageElement.classList.remove("message--error", "message--info", "message--visible");
 }
 
 function clearResults() {
@@ -342,6 +373,7 @@ function setControlsDisabled(disabled) {
   countInput.disabled = disabled;
   loadButton.disabled = disabled;
   evolutionToggle.disabled = disabled;
+  typeFilter.disabled = disabled;
   searchForm.querySelector('button[type="submit"]').disabled = disabled;
 }
 
@@ -353,8 +385,9 @@ async function loadInitialPokemon() {
     return;
   }
 
-  // Limpia el campo de búsqueda para que actúe como reinicio de la lista.
+  // Limpia el campo de búsqueda y el filtro para que actúe como reinicio.
   searchInput.value = "";
+  typeFilter.value = "";
 
   showLoading();
   setControlsDisabled(true);
@@ -391,6 +424,9 @@ async function handleSearch(event) {
     updateCounter(0);
     return;
   }
+
+  // Una búsqueda nueva reinicia el filtro de tipo.
+  typeFilter.value = "";
 
   showLoading();
   setControlsDisabled(true);
@@ -430,7 +466,8 @@ async function handleEvolutionToggle() {
 
   // Al desactivar no hay que consultar la API: se re-renderiza sin evoluciones.
   if (!showEvolutions) {
-    renderPokemonList(currentPokemonList, null);
+    currentEvolutions = null;
+    renderCurrentList();
     return;
   }
 
@@ -438,11 +475,13 @@ async function handleEvolutionToggle() {
   setControlsDisabled(true);
   isRequestInProgress = true;
   try {
-    await fetchAndRender(currentPokemonList);
+    currentEvolutions = await fetchEvolutions(currentPokemonList);
+    renderCurrentList();
   } catch (error) {
     console.error("Error al cargar las evoluciones:", error);
     showError("No fue posible cargar las evoluciones. Intenta nuevamente.");
-    renderPokemonList(currentPokemonList, null);
+    currentEvolutions = null;
+    renderCurrentList();
   } finally {
     hideLoading();
     setControlsDisabled(false);
@@ -455,10 +494,27 @@ function capitalize(text) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+// Rellena el selector de tipos a partir del mapa de colores.
+function populateTypeFilter() {
+  Object.keys(typeColors).forEach((type) => {
+    const option = document.createElement("option");
+    option.value = type;
+    option.textContent = capitalize(type);
+    typeFilter.appendChild(option);
+  });
+}
+
+// Aplica el filtro de tipo sobre la lista actual.
+function handleTypeFilterChange() {
+  renderCurrentList();
+}
+
 // Inicialización
 
+populateTypeFilter();
 searchForm.addEventListener("submit", handleSearch);
 loadButton.addEventListener("click", loadInitialPokemon);
 evolutionToggle.addEventListener("change", handleEvolutionToggle);
+typeFilter.addEventListener("change", handleTypeFilterChange);
 
 loadInitialPokemon();

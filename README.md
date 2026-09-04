@@ -28,9 +28,12 @@ nombre y los tipos del Pokémon, todo renderizado dinámicamente desde JavaScrip
 * Generación de cada Pokémon mostrada en la tarjeta (ej. "Gen I").
 * Insignia "Legendario" en los Pokémon legendarios.
 * Carga inicial con Pokémon aleatorios.
-* Elegir la cantidad de Pokémon a mostrar al inicio (1–150).
+* Elegir la cantidad de Pokémon a mostrar al inicio (1–150). El botón "Cargar"
+  recarga la lista con esa cantidad y limpia la búsqueda (integra el
+  comportamiento del antiguo botón "Mostrar todos").
 * Toggle "Mostrar evoluciones" que muestra la línea evolutiva como mini
   tarjetas una al lado de la otra, con flechas indicando la dirección.
+* Filtro por tipo para mostrar solo los Pokémon de un tipo de la lista cargada.
 * Contador de Pokémon mostrados.
 * Animación de aparición de las tarjetas.
 

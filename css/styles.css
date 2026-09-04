@@ -215,6 +215,28 @@ a {
   cursor: pointer;
 }
 
+.type-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+}
+
+.type-filter select {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  cursor: pointer;
+}
+
+.type-filter select:focus {
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  outline: none;
+}
+
 .results__counter {
   color: var(--color-text-muted);
   font-size: 0.95rem;
@@ -237,6 +259,12 @@ a {
   background-color: var(--color-error-bg);
   color: var(--color-error);
   border: 1px solid #fecaca;
+}
+
+.message--info {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 
 /* Estado de carga */
