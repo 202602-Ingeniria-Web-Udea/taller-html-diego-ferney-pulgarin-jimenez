@@ -23,7 +23,7 @@
 
       <form id="search-form" class="search__form" novalidate>
         <div class="search__field">
-          <label class="search__label" for="search-input">Nombre del Pokémon</label>
+          <label class="search__label" for="search-input">Busca por nombre del Pokémon</label>
           <input
             id="search-input"
             class="search__input"
@@ -53,14 +53,24 @@
       <div class="results__header">
         <h2 id="results-title" class="results__title">Resultados</h2>
         <div class="results__meta">
-          <label class="evolution-toggle" for="show-evolutions-toggle">
+          <label class="toggle" for="show-evolutions-toggle">
             <input type="checkbox" id="show-evolutions-toggle" />
             Mostrar evoluciones
+          </label>
+          <label class="toggle" for="show-stats-toggle">
+            <input type="checkbox" id="show-stats-toggle" />
+            Mostrar estadísticas
           </label>
           <label class="type-filter" for="type-filter">
             Tipo
             <select id="type-filter">
               <option value="">Todos</option>
+            </select>
+          </label>
+          <label class="type-filter" for="generation-filter">
+            Generación
+            <select id="generation-filter">
+              <option value="">Todas</option>
             </select>
           </label>
           <p id="results-counter" class="results__counter" aria-live="polite"></p>

@@ -27,13 +27,18 @@ nombre y los tipos del Pokémon, todo renderizado dinámicamente desde JavaScrip
 * Tipos mostrados como insignias con colores según el tipo.
 * Generación de cada Pokémon mostrada en la tarjeta (ej. "Gen I").
 * Insignia "Legendario" en los Pokémon legendarios.
+* Nivel de poder (suma de las 6 estadísticas base).
+* Las 6 estadísticas base (PS, Ataque, Defensa, At. Esp., Def. Esp., Velocidad).
 * Carga inicial con Pokémon aleatorios.
 * Elegir la cantidad de Pokémon a mostrar al inicio (1–150). El botón "Cargar"
   recarga la lista con esa cantidad y limpia la búsqueda (integra el
   comportamiento del antiguo botón "Mostrar todos").
 * Toggle "Mostrar evoluciones" que muestra la línea evolutiva como mini
   tarjetas una al lado de la otra, con flechas indicando la dirección.
+* Toggle "Mostrar estadísticas" que muestra u oculta el poder total y las 6
+  estadísticas base de cada tarjeta.
 * Filtro por tipo para mostrar solo los Pokémon de un tipo de la lista cargada.
+* Filtro por generación (I–IX) para mostrar solo los Pokémon de una generación.
 * Contador de Pokémon mostrados.
 * Animación de aparición de las tarjetas.
 

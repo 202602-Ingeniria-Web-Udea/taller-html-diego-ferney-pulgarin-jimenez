@@ -9,7 +9,9 @@ const searchInput = document.getElementById("search-input");
 const countInput = document.getElementById("pokemon-count");
 const loadButton = document.getElementById("load-button");
 const evolutionToggle = document.getElementById("show-evolutions-toggle");
+const statsToggle = document.getElementById("show-stats-toggle");
 const typeFilter = document.getElementById("type-filter");
+const generationFilter = document.getElementById("generation-filter");
 const resultsContainer = document.getElementById("results-container");
 const resultsCounter = document.getElementById("results-counter");
 const messageElement = document.getElementById("message");
@@ -20,6 +22,9 @@ let isRequestInProgress = false;
 
 // Indica si el usuario quiere ver la línea evolutiva en cada tarjeta.
 let showEvolutions = false;
+
+// Indica si el usuario quiere ver las estadísticas (poder + stats base).
+let showStats = false;
 
 // Lista actualmente mostrada; permite re-renderizar sin volver a consultar la API.
 let currentPokemonList = [];
@@ -48,6 +53,19 @@ const typeColors = {
   steel: "#b8b8d0",
   fairy: "#ee99ac",
 };
+
+// Etiquetas en español para las estadísticas base.
+const statLabels = {
+  hp: "PS",
+  attack: "Ataque",
+  defense: "Defensa",
+  "special-attack": "At. Esp.",
+  "special-defense": "Def. Esp.",
+  speed: "Velocidad",
+};
+
+// Generaciones disponibles para el filtro.
+const GENERATIONS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
 
 // Comunicación con la API
 
@@ -99,6 +117,12 @@ async function handleApiResponse(response) {
 
 // Normaliza los datos de la API (Pokémon + especie) a un objeto simple.
 function mapPokemonData(data, species) {
+  const stats = (data.stats || []).map((entry) => ({
+    name: statLabels[entry.stat.name] || entry.stat.name,
+    value: entry.base_stat,
+  }));
+  const totalStats = stats.reduce((sum, stat) => sum + stat.value, 0);
+
   return {
     name: data.name,
     image: getPokemonImage(data),
@@ -106,6 +130,8 @@ function mapPokemonData(data, species) {
     generation: getGenerationName(species),
     isLegendary: Boolean(species?.is_legendary),
     evolutionChainUrl: species?.evolution_chain?.url || null,
+    stats,
+    totalStats,
   };
 }
 
@@ -199,18 +225,21 @@ function getInitialCount() {
 
 // Renderizado del DOM
 
-// Aplica el filtro de tipo sobre la lista cargada.
-function applyTypeFilter(pokemonList) {
+// Aplica los filtros de tipo y generación sobre la lista cargada.
+function applyFilters(pokemonList) {
   const selectedType = typeFilter.value;
-  if (!selectedType) {
-    return pokemonList;
-  }
-  return pokemonList.filter((pokemon) => pokemon.types.includes(selectedType));
+  const selectedGeneration = generationFilter.value;
+
+  return pokemonList.filter(
+    (pokemon) =>
+      (!selectedType || pokemon.types.includes(selectedType)) &&
+      (!selectedGeneration || pokemon.generation === selectedGeneration)
+  );
 }
 
-// Renderiza la lista cargada aplicando el filtro de tipo actual.
+// Renderiza la lista cargada aplicando los filtros actuales.
 function renderCurrentList() {
-  const filteredList = applyTypeFilter(currentPokemonList);
+  const filteredList = applyFilters(currentPokemonList);
 
   clearResults();
   filteredList.forEach((pokemon) => {
@@ -219,9 +248,9 @@ function renderCurrentList() {
   });
   updateCounter(filteredList.length);
 
-  // Sin resultados por el filtro, se muestra un mensaje contextual.
+  // Sin resultados por los filtros, se muestra un mensaje contextual.
   if (filteredList.length === 0) {
-    showInfo("No hay Pokémon de este tipo en la lista actual.");
+    showInfo("No hay Pokémon que coincidan con los filtros seleccionados.");
   } else {
     hideMessage();
   }
@@ -267,7 +296,19 @@ function createPokemonCard(pokemon, evolutionLine) {
     typesContainer.appendChild(badge);
   });
 
-  body.append(name, generation, typesContainer);
+  const bodyContent = [name, generation];
+
+  if (showStats) {
+    bodyContent.push(createPowerElement(pokemon.totalStats));
+  }
+
+  bodyContent.push(typesContainer);
+
+  if (showStats) {
+    bodyContent.push(createStatsSection(pokemon.stats));
+  }
+
+  body.append(...bodyContent);
 
   if (pokemon.isLegendary) {
     const legendaryBadge = document.createElement("span");
@@ -282,6 +323,34 @@ function createPokemonCard(pokemon, evolutionLine) {
 
   card.append(image, body);
   return card;
+}
+
+// Crea la línea destacada con el poder total (suma de stats base).
+function createPowerElement(totalStats) {
+  const power = document.createElement("p");
+  power.classList.add("card__power");
+  power.textContent = `Poder: ${totalStats}`;
+  return power;
+}
+
+// Crea la sección con las 6 estadísticas base (etiqueta + valor).
+function createStatsSection(stats) {
+  const container = document.createElement("div");
+  container.classList.add("card__stats");
+
+  stats.forEach((stat) => {
+    const label = document.createElement("span");
+    label.classList.add("card__stat-label");
+    label.textContent = stat.name;
+
+    const value = document.createElement("span");
+    value.classList.add("card__stat-value");
+    value.textContent = stat.value;
+
+    container.append(label, value);
+  });
+
+  return container;
 }
 
 // Crea la fila de etapas evolutivas (mini tarjetas separadas por flechas).
@@ -373,7 +442,9 @@ function setControlsDisabled(disabled) {
   countInput.disabled = disabled;
   loadButton.disabled = disabled;
   evolutionToggle.disabled = disabled;
+  statsToggle.disabled = disabled;
   typeFilter.disabled = disabled;
+  generationFilter.disabled = disabled;
   searchForm.querySelector('button[type="submit"]').disabled = disabled;
 }
 
@@ -385,9 +456,10 @@ async function loadInitialPokemon() {
     return;
   }
 
-  // Limpia el campo de búsqueda y el filtro para que actúe como reinicio.
+  // Limpia el campo de búsqueda y los filtros para que actúe como reinicio.
   searchInput.value = "";
   typeFilter.value = "";
+  generationFilter.value = "";
 
   showLoading();
   setControlsDisabled(true);
@@ -425,8 +497,9 @@ async function handleSearch(event) {
     return;
   }
 
-  // Una búsqueda nueva reinicia el filtro de tipo.
+  // Una búsqueda nueva reinicia los filtros.
   typeFilter.value = "";
+  generationFilter.value = "";
 
   showLoading();
   setControlsDisabled(true);
@@ -504,17 +577,41 @@ function populateTypeFilter() {
   });
 }
 
+// Rellena el selector de generaciones.
+function populateGenerationFilter() {
+  GENERATIONS.forEach((generation) => {
+    const option = document.createElement("option");
+    option.value = generation;
+    option.textContent = `Generación ${generation}`;
+    generationFilter.appendChild(option);
+  });
+}
+
 // Aplica el filtro de tipo sobre la lista actual.
 function handleTypeFilterChange() {
+  renderCurrentList();
+}
+
+// Aplica el filtro de generación sobre la lista actual.
+function handleGenerationFilterChange() {
+  renderCurrentList();
+}
+
+// Muestra u oculta las estadísticas (poder + stats base) en las tarjetas.
+function handleStatsToggle() {
+  showStats = statsToggle.checked;
   renderCurrentList();
 }
 
 // Inicialización
 
 populateTypeFilter();
+populateGenerationFilter();
 searchForm.addEventListener("submit", handleSearch);
 loadButton.addEventListener("click", loadInitialPokemon);
 evolutionToggle.addEventListener("change", handleEvolutionToggle);
+statsToggle.addEventListener("change", handleStatsToggle);
 typeFilter.addEventListener("change", handleTypeFilterChange);
+generationFilter.addEventListener("change", handleGenerationFilterChange);
 
 loadInitialPokemon();
